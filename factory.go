@@ -4,12 +4,15 @@ import (
 	"context"
 )
 
-type Factory[T any] interface {
-	Make(ctx context.Context) (T, error)
+type Evaluator[T any] interface {
+	Supports(ctx context.Context, name string) bool
 }
 
-type FuncFactory[T any] func(ctx context.Context) (T, error)
+type Builder[T any] interface {
+	Build(ctx context.Context, name string) (T, error)
+}
 
-func (receiver FuncFactory[T]) Make(ctx context.Context) (T, error) {
-	return receiver(ctx)
+type Factory[T any] interface {
+	Evaluator[T]
+	Builder[T]
 }

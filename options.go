@@ -4,22 +4,22 @@ import "sync"
 
 type Options[T any] struct {
 	lock      *sync.RWMutex
-	factories map[string]Factory[T]
+	factories []Factory[T]
 }
 
 type Option[T any] func(options *Options[T])
 
-func OptionFactory[T any](name string, factory Factory[T]) Option[T] {
+func OptionFactory[T any](factory Factory[T]) Option[T] {
 	return func(options *Options[T]) {
 		options.lock.Lock()
 
 		defer options.lock.Unlock()
 
-		options.factories[name] = factory
+		options.factories = append(options.factories, factory)
 	}
 }
 
-func OptionFactories[T any](factories map[string]Factory[T]) Option[T] {
+func OptionFactories[T any](factories []Factory[T]) Option[T] {
 	return func(options *Options[T]) {
 		options.lock.Lock()
 
@@ -32,6 +32,6 @@ func OptionFactories[T any](factories map[string]Factory[T]) Option[T] {
 func NewOptions[T any]() Options[T] {
 	return Options[T]{
 		lock:      &sync.RWMutex{},
-		factories: make(map[string]Factory[T]),
+		factories: make([]Factory[T], 0),
 	}
 }

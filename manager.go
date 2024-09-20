@@ -44,21 +44,21 @@ func (receiver *Manager[T]) makeAndBind(ctx context.Context, name string) (T, er
 
 	defer receiver.opts.lock.RUnlock()
 
-	factory, ok := receiver.opts.factories[name]
+	for _, factory := range receiver.opts.factories {
+		if factory.Supports(ctx, name) {
+			built, err := factory.Build(ctx, name)
 
-	if !ok {
-		return *new(T), ErrFactoryNotSet
+			if err != nil {
+				return *new(T), err
+			}
+
+			receiver.built[name] = built
+
+			return built, nil
+		}
 	}
 
-	built, err := factory.Make(ctx)
-
-	if err != nil {
-		return *new(T), err
-	}
-
-	receiver.built[name] = built
-
-	return built, nil
+	return *new(T), ErrFactoryNotSet
 }
 
 func New[T any](opts ...Option[T]) (*Manager[T], error) {
