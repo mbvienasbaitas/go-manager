@@ -2,6 +2,7 @@ package factory
 
 import (
 	"context"
+	"github.com/mbvienasbaitas/go-manager"
 )
 
 type Factory[T any] struct {
@@ -32,6 +33,6 @@ func (f *Factory[T]) Supports(ctx context.Context, name string) bool {
 	return f.opts.evaluator.Supports(ctx, name)
 }
 
-func (f *Factory[T]) Build(ctx context.Context, name string) (T, error) {
+func (f *Factory[T]) Build(ctx context.Context, name string) (manager.Service[T], error) {
 	return f.opts.builder.Build(ctx, name)
 }

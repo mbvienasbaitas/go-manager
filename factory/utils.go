@@ -11,9 +11,9 @@ func (receiver FuncEvaluator[T]) Supports(ctx context.Context, name string) bool
 	return receiver(ctx, name)
 }
 
-type FuncBuilder[T any] func(ctx context.Context, name string) (T, error)
+type FuncBuilder[T any] func(ctx context.Context, name string) (manager.Service[T], error)
 
-func (receiver FuncBuilder[T]) Build(ctx context.Context, name string) (T, error) {
+func (receiver FuncBuilder[T]) Build(ctx context.Context, name string) (manager.Service[T], error) {
 	return receiver(ctx, name)
 }
 

@@ -15,8 +15,8 @@ func TestManagerMake(t *testing.T) {
 		factory.OptionEvaluator[string](factory.FuncEvaluator[string](func(ctx context.Context, name string) bool {
 			return name == "factory"
 		})),
-		factory.OptionBuilder[string](factory.FuncBuilder[string](func(ctx context.Context, name string) (string, error) {
-			return "built", nil
+		factory.OptionBuilder[string](factory.FuncBuilder[string](func(ctx context.Context, name string) (manager.Service[string], error) {
+			return factory.NewGenericService[string]("built"), nil
 		})),
 	)
 

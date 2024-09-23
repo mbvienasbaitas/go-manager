@@ -8,7 +8,7 @@ import (
 type Manager[T any] struct {
 	lock  *sync.RWMutex
 	opts  Options[T]
-	built map[string]T
+	built map[string]Service[T]
 }
 
 func (receiver *Manager[T]) Make(ctx context.Context, name string) (T, error) {
@@ -17,9 +17,15 @@ func (receiver *Manager[T]) Make(ctx context.Context, name string) (T, error) {
 	svc, ok := receiver.built[name]
 
 	if ok {
+		if svc.Valid(ctx, name) {
+			receiver.lock.RUnlock()
+
+			return svc.Get(), nil
+		}
+
 		receiver.lock.RUnlock()
 
-		return svc, nil
+		receiver.Forget(name)
 	}
 
 	receiver.lock.RUnlock()
@@ -64,7 +70,7 @@ func (receiver *Manager[T]) makeAndBind(ctx context.Context, name string) (T, er
 
 			receiver.built[name] = built
 
-			return built, nil
+			return built.Get(), nil
 		}
 	}
 
@@ -85,6 +91,6 @@ func New[T any](opts ...Option[T]) (*Manager[T], error) {
 	return &Manager[T]{
 		lock:  &sync.RWMutex{},
 		opts:  options,
-		built: make(map[string]T),
+		built: make(map[string]Service[T]),
 	}, nil
 }

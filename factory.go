@@ -9,7 +9,7 @@ type Evaluator[T any] interface {
 }
 
 type Builder[T any] interface {
-	Build(ctx context.Context, name string) (T, error)
+	Build(ctx context.Context, name string) (Service[T], error)
 }
 
 type Factory[T any] interface {
