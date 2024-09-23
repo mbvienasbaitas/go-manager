@@ -27,6 +27,16 @@ func (receiver *Manager[T]) Make(ctx context.Context, name string) (T, error) {
 	return receiver.makeAndBind(ctx, name)
 }
 
+func (receiver *Manager[T]) Forget(name string) *Manager[T] {
+	receiver.lock.Lock()
+
+	defer receiver.lock.Unlock()
+
+	delete(receiver.built, name)
+
+	return receiver
+}
+
 func (receiver *Manager[T]) Options(opts ...Option[T]) *Manager[T] {
 	for _, o := range opts {
 		o(&receiver.opts)
