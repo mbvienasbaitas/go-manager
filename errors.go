@@ -3,6 +3,7 @@ package manager
 import "errors"
 
 var (
-	ErrOptionFactoriesNotSet = errors.New("factories not set")
-	ErrFactoryNotSet         = errors.New("factory not set")
+	ErrFactoryNotSet      = errors.New("factory not set")
+	ErrServiceInvalidated = errors.New("service invalided")
+	ErrServiceUnsupported = errors.New("service unsupported")
 )

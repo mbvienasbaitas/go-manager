@@ -2,30 +2,39 @@ package manager
 
 import (
 	"context"
+	"errors"
 	"sync"
 )
 
 type Manager[T any] struct {
-	lock  *sync.RWMutex
-	opts  Options[T]
-	built map[string]Service[T]
+	lock     *sync.RWMutex
+	opts     Options[T]
+	registry map[string]Service[T]
 }
 
 func (receiver *Manager[T]) Make(ctx context.Context, name string) (T, error) {
 	receiver.lock.RLock()
 
-	svc, ok := receiver.built[name]
+	existing, ok := receiver.registry[name]
 
 	if ok {
-		if svc.Valid(ctx, name) {
-			receiver.lock.RUnlock()
+		svc, err := existing.GetService()
 
-			return svc.Get(), nil
+		if err != nil {
+			if errors.Is(err, ErrServiceInvalidated) {
+				receiver.lock.RUnlock()
+
+				receiver.Forget(name)
+
+				return receiver.makeAndBind(ctx, name)
+			}
+
+			return svc, err
 		}
 
 		receiver.lock.RUnlock()
 
-		receiver.Forget(name)
+		return svc, nil
 	}
 
 	receiver.lock.RUnlock()
@@ -38,7 +47,7 @@ func (receiver *Manager[T]) Forget(name string) *Manager[T] {
 
 	defer receiver.lock.Unlock()
 
-	delete(receiver.built, name)
+	delete(receiver.registry, name)
 
 	return receiver
 }
@@ -61,17 +70,19 @@ func (receiver *Manager[T]) makeAndBind(ctx context.Context, name string) (T, er
 	defer receiver.opts.lock.RUnlock()
 
 	for _, factory := range receiver.opts.factories {
-		if factory.Supports(ctx, name) {
-			built, err := factory.Build(ctx, name)
+		built, err := factory.Build(ctx, name)
 
-			if err != nil {
-				return *new(T), err
+		if err != nil {
+			if errors.Is(err, ErrServiceUnsupported) {
+				continue
 			}
 
-			receiver.built[name] = built
-
-			return built.Get(), nil
+			return *new(T), err
 		}
+
+		receiver.registry[name] = built
+
+		return built.GetService()
 	}
 
 	return *new(T), ErrFactoryNotSet
@@ -84,13 +95,9 @@ func New[T any](opts ...Option[T]) (*Manager[T], error) {
 		o(&options)
 	}
 
-	if options.factories == nil {
-		return nil, ErrOptionFactoriesNotSet
-	}
-
 	return &Manager[T]{
-		lock:  &sync.RWMutex{},
-		opts:  options,
-		built: make(map[string]Service[T]),
+		lock:     &sync.RWMutex{},
+		opts:     options,
+		registry: make(map[string]Service[T]),
 	}, nil
 }
