@@ -24,7 +24,11 @@ func (receiver *Manager[T]) Make(ctx context.Context, name string) (T, error) {
 			if errors.Is(err, ErrServiceExpired) {
 				receiver.lock.RUnlock()
 
-				receiver.Forget(name)
+				err = receiver.Forget(name)
+
+				if err != nil {
+					return *new(T), err
+				}
 
 				return receiver.makeAndBind(ctx, name)
 			}
@@ -42,14 +46,24 @@ func (receiver *Manager[T]) Make(ctx context.Context, name string) (T, error) {
 	return receiver.makeAndBind(ctx, name)
 }
 
-func (receiver *Manager[T]) Forget(name string) *Manager[T] {
+func (receiver *Manager[T]) Forget(name string) error {
 	receiver.lock.Lock()
 
 	defer receiver.lock.Unlock()
 
+	svc, ok := receiver.registry[name]
+
+	if ok {
+		err := shutdown(svc)
+
+		if err != nil {
+			return err
+		}
+	}
+
 	delete(receiver.registry, name)
 
-	return receiver
+	return nil
 }
 
 func (receiver *Manager[T]) Options(opts ...Option[T]) *Manager[T] {
@@ -58,6 +72,20 @@ func (receiver *Manager[T]) Options(opts ...Option[T]) *Manager[T] {
 	}
 
 	return receiver
+}
+
+func (receiver *Manager[T]) Shutdown() error {
+	receiver.lock.Lock()
+
+	defer receiver.lock.Unlock()
+
+	for _, svc := range receiver.registry {
+		if err := shutdown(svc); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (receiver *Manager[T]) makeAndBind(ctx context.Context, name string) (T, error) {
