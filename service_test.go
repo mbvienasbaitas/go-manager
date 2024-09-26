@@ -23,7 +23,7 @@ func TestTimedServiceGetService(t *testing.T) {
 
 	time.Sleep(time.Second)
 
-	wantErr := ErrServiceInvalidated
+	wantErr := ErrServiceExpired
 
 	_, err = svc.GetService()
 

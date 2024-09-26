@@ -4,6 +4,6 @@ import "errors"
 
 var (
 	ErrFactoryNotSet      = errors.New("factory not set")
-	ErrServiceInvalidated = errors.New("service invalided")
+	ErrServiceExpired     = errors.New("service expired")
 	ErrServiceUnsupported = errors.New("service unsupported")
 )

@@ -37,7 +37,7 @@ func (receiver *TimedService[T]) GetService() (T, error) {
 		return receiver.service, nil
 	}
 
-	return receiver.service, ErrServiceInvalidated
+	return receiver.service, ErrServiceExpired
 }
 
 func NewTimedService[T any](service T, validUntil time.Time) *TimedService[T] {

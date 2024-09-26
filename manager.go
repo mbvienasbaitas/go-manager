@@ -21,7 +21,7 @@ func (receiver *Manager[T]) Make(ctx context.Context, name string) (T, error) {
 		svc, err := existing.GetService()
 
 		if err != nil {
-			if errors.Is(err, ErrServiceInvalidated) {
+			if errors.Is(err, ErrServiceExpired) {
 				receiver.lock.RUnlock()
 
 				receiver.Forget(name)
