@@ -5,6 +5,10 @@ import (
 	"time"
 )
 
+type Bootable interface {
+	Boot() error
+}
+
 type Shutdownable interface {
 	Shutdown() error
 }
@@ -19,6 +23,10 @@ type GenericService[T any] struct {
 
 func (receiver *GenericService[T]) GetService() (T, error) {
 	return receiver.service, nil
+}
+
+func (receiver *GenericService[T]) Boot() error {
+	return boot(receiver.service)
 }
 
 func (receiver *GenericService[T]) Shutdown() error {
@@ -46,6 +54,10 @@ func (receiver *TimedService[T]) GetService() (T, error) {
 	}
 
 	return receiver.service, ErrServiceExpired
+}
+
+func (receiver *TimedService[T]) Boot() error {
+	return boot(receiver.service)
 }
 
 func (receiver *TimedService[T]) Shutdown() error {

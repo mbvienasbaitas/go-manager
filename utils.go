@@ -10,7 +10,21 @@ func (receiver FuncFactory[T]) Build(ctx context.Context, name string) (Service[
 	return receiver(ctx, name)
 }
 
-func shutdown(i interface{}) error {
+func boot(i any) error {
+	service, castOk := i.(Bootable)
+
+	if castOk {
+		err := service.Boot()
+
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func shutdown(i any) error {
 	service, castOk := i.(Shutdownable)
 
 	if castOk {

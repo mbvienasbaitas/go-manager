@@ -108,6 +108,12 @@ func (receiver *Manager[T]) makeAndBind(ctx context.Context, name string) (T, er
 			return *new(T), err
 		}
 
+		err = boot(built)
+
+		if err != nil {
+			return *new(T), err
+		}
+
 		receiver.registry[name] = built
 
 		return built.GetService()
